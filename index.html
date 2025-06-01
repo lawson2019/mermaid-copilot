@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid 工具箱</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 全局动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 8px;
+            padding: 8px;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(20px);
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toolbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+            position: relative;
+            z-index: 50000;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            position: relative;
+            min-height: 0;
+            gap: 8px;
+        }
+
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-width: 200px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInRight 0.6s ease-out 0.3s both;
+        }
+
+        .panel-header {
+            padding: 16px 24px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 可调整大小的分隔器 */
+        .resizer {
+            width: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: col-resize;
+            flex-shrink: 0;
+            position: relative;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .resizer:hover {
+            background: rgba(102, 126, 234, 0.5);
+            transform: scaleX(1.2);
+        }
+
+        .resizer::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.8);
+            transform: translate(-50%, -50%);
+            border-radius: 1px;
+            transition: all 0.3s ease;
+        }
+
+        /* AI编写指示器 */
+        .ai-typing-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, rgba(14, 99, 156, 0.95), rgba(66, 153, 225, 0.95));
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            display: none;
+            animation: typingPulse 1s ease-in-out infinite;
+            box-shadow: 0 4px 12px rgba(14, 99, 156, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes typingPulse {
+            0% {
+                opacity: 0.8;
+                transform: scale(1) translateY(0px);
+                box-shadow: 0 4px 12px rgba(14, 99, 156, 0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05) translateY(-1px);
+                box-shadow: 0 6px 16px rgba(14, 99, 156, 0.4);
+            }
+            100% {
+                opacity: 0.8;
+                transform: scale(1) translateY(0px);
+                box-shadow: 0 4px 12px rgba(14, 99, 156, 0.3);
+            }
+        }
+
+        .preview-panel {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+            min-height: 0; /* 允许flex子元素正确计算高度 */
+            /* 移除 overflow: hidden 以允许子元素滚动 */
+        }
+
+        .panel-header {
+            background: #4a5568;
+            color: white;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .editor-panel .panel-header {
+            background: #2d3748;
+        }
+
+        .preview-panel .panel-header {
+            background: #4299e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .preview-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .preview-btn:hover::before {
+            left: 100%;
+        }
+
+        .preview-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+        }
+
+        .preview-btn:active {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(0);
+        }
+
+        /* 代码checkpoint样式 */
+        .code-checkpoint {
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .checkpoint-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkpoint-icon {
+            font-size: 16px;
+        }
+
+        .checkpoint-text {
+            flex: 1;
+            color: #0369a1;
+            font-weight: 500;
+        }
+
+        .checkpoint-btn {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .checkpoint-btn:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);
+        }
+
+        .checkpoint-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(2, 132, 199, 0.2);
+        }
+
+        /* 全屏模式样式 */
+        .preview-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background: white !important;
+            flex: none !important;
+        }
+
+        .preview-fullscreen #preview {
+            background: #f8f9fa;
+        }
+
+        .preview-fullscreen .panel-header {
+            background: #4299e1;
+        }
+
+        #editor {
+            flex: 1;
+            border: none;
+            overflow: hidden; /* Monaco编辑器自己处理滚动 */
+            background: #2d3748; /* 与Monaco编辑器主题背景色一致，避免闪白 */
+        }
+
+
+        /* 美化滚动条 - 更明显和现代化 */
+        #preview::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        #preview::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 6px;
+            margin: 4px;
+        }
+
+        #preview::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #4299e1, #3182ce);
+            border-radius: 6px;
+            border: 2px solid #e2e8f0;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        #preview::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #3182ce, #2c5aa0);
+            border-color: #cbd5e0;
+        }
+
+        #preview::-webkit-scrollbar-thumb:active {
+            background: linear-gradient(180deg, #2c5aa0, #2a4a7a);
+        }
+
+        /* 优化的预览区域 - 扩大可滚动范围 */
+        #preview {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto; /* 垂直滚动 */
+            overflow-x: auto; /* 允许水平滚动以处理宽图表 */
+            background: #f8f9fa;
+            /* 使用更大的滚动区域 */
+            height: calc(100vh - 140px); /* 减去工具栏和头部高度 */
+            max-height: none; /* 移除最大高度限制 */
+            min-height: 300px; /* 增加最小显示区域 */
+            /* 图表左右居中 */
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        /* 确保SVG图表正常显示 */
+        #preview svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* 图表容器 */
+        .diagram-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: auto;
+            max-width: 100%;
+            text-align: center;
+        }
+        
+        /* 确保图表容器内的SVG居中 */
+        .diagram-container svg {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.8);
+            color: #4a5568;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .examples {
+            margin-top: 24px;
+        }
+
+        .example-item {
+            margin-bottom: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .example-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .example-item:hover::before {
+            left: 100%;
+        }
+
+        .example-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f7fafc;
+        }
+
+        .example-desc {
+            font-size: 13px;
+            color: #cbd5e0;
+            line-height: 1.4;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .loading {
+            display: none;
+            color: #4299e1;
+        }
+
+        .export-dropdown {
+            position: relative;
+            display: inline-block;
+            z-index: 10000;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: fixed;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            min-width: 180px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            z-index: 999999;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .dropdown-content a {
+            color: #4a5568;
+            padding: 14px 20px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content a:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            color: #667eea;
+            transform: translateX(4px);
+        }
+
+        .export-dropdown:hover .dropdown-content {
+            display: block;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        /* AI对话框样式 */
+        .ai-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ai-dialog-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 32px;
+            width: 90%;
+            max-width: 650px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .ai-dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .ai-dialog-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #a0aec0;
+            padding: 5px;
+            line-height: 1;
+        }
+
+        .ai-close-btn:hover {
+            color: #e53e3e;
+        }
+
+        .ai-input-group {
+            margin-bottom: 20px;
+        }
+
+        .ai-input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .ai-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .ai-textarea:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .ai-config-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .ai-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .ai-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .ai-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .ai-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ai-btn-primary {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .ai-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .ai-btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .ai-btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .ai-btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .ai-examples {
+            margin-top: 15px;
+        }
+
+        .ai-example-item {
+            background: #edf2f7;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .ai-example-item:hover {
+            background: #e2e8f0;
+            border-color: #cbd5e0;
+        }
+
+        .ai-loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #4299e1;
+        }
+
+        .ai-loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            border-top-color: #4299e1;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .ai-result {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 8px;
+        }
+
+        .ai-result-title {
+            font-weight: 600;
+            color: #22543d;
+            margin-bottom: 10px;
+        }
+
+        .ai-result-code {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* GitHub Copilot 风格的侧边栏聊天界面 */
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #333;
+            background: #252526;
+        }
+
+        .sidebar-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #cccccc;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-icon {
+            font-size: 16px;
+        }
+
+        .sidebar-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .sidebar-tab {
+            flex: 1;
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid #333;
+            color: #cccccc;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sidebar-tab:hover {
+            background: #2a2a2a;
+            border-color: #404040;
+        }
+
+        .sidebar-tab.active {
+            background: #0e639c;
+            border-color: #0e639c;
+            color: white;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-content.active {
+            display: flex;
+        }
+
+        /* 聊天配置区 */
+        .chat-config {
+            border-bottom: 1px solid #333;
+            background: #252526;
+        }
+
+        .config-header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #cccccc;
+            background: #2d2d30;
+        }
+
+        .config-header:hover {
+            background: #333333;
+        }
+
+        .config-toggle {
+            transition: transform 0.2s;
+        }
+
+        .config-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .config-content {
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .config-content.collapsed {
+            max-height: 0;
+            padding: 0 16px;
+        }
+
+        .config-select, .config-input {
+            padding: 6px 8px;
+            background: #3c3c3c;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            color: #cccccc;
+            font-size: 12px;
+        }
+
+        .config-select:focus, .config-input:focus {
+            outline: none;
+            border-color: #0e639c;
+        }
+
+        /* 聊天历史区 */
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .welcome-message, .chat-message {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .bot-avatar, .user-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .bot-avatar {
+            background: #0e639c;
+        }
+
+        .user-avatar {
+            background: #005a9e;
+            color: white;
+            font-weight: 600;
+        }
+
+        .message-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-text {
+            padding: 8px 12px;
+            background: #2d2d30;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #cccccc;
+            word-wrap: break-word;
+        }
+
+        .user-message .message-text {
+            background: #005a9e;
+            color: white;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #d4d4d4;
+            margin: 8px 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            background: #0e639c;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #1177bb;
+        }
+
+
+        /* 输入区域 */
+        .chat-input-container {
+            padding: 16px;
+            border-top: 1px solid #333;
+            background: #252526;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        #chatInput {
+            flex: 1;
+            min-height: 36px;
+            max-height: 36px;
+            padding: 8px 12px;
+            background: #3c3c3c;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            color: #cccccc;
+            font-size: 13px;
+            font-family: inherit;
+            resize: none;
+            line-height: 1.4;
+        }
+
+        #chatInput:focus {
+            outline: none;
+            border-color: #0e639c;
+        }
+
+        #chatInput::placeholder {
+            color: #888888;
+        }
+
+        .chat-send-btn {
+            width: 36px;
+            height: 36px;
+            background: #0e639c;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chat-send-btn:hover {
+            background: #1177bb;
+        }
+
+        .chat-send-btn:disabled {
+            background: #666666;
+            cursor: not-allowed;
+        }
+
+        .send-icon {
+            font-size: 14px;
+            transform: rotate(0deg);
+        }
+
+        .input-hint {
+            font-size: 10px;
+            color: #888888;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        /* 加载状态 */
+        .chat-loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #2d2d30;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #cccccc;
+        }
+
+        .chat-loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .chat-loading-dot {
+            width: 4px;
+            height: 4px;
+            background: #0e639c;
+            border-radius: 50%;
+            animation: loading-bounce 1.4s ease-in-out infinite both;
+        }
+
+        .chat-loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .chat-loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes loading-bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            } 40% {
+                transform: scale(1);
+            }
+        }
+
+        /* 滚动条样式 */
+        .chat-history::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-history::-webkit-scrollbar-track {
+            background: #2d2d30;
+        }
+
+        .chat-history::-webkit-scrollbar-thumb {
+            background: #404040;
+            border-radius: 3px;
+        }
+
+        .chat-history::-webkit-scrollbar-thumb:hover {
+            background: #505050;
+        }
+
+        /* 示例模板区域样式调整 */
+        .examples {
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .example-item {
+            margin-bottom: 10px;
+            padding: 12px;
+            background: #2d2d30;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-item:hover {
+            background: #333333;
+            border-color: #0e639c;
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #cccccc;
+            font-size: 13px;
+        }
+
+        .example-desc {
+            font-size: 11px;
+            color: #888888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <!-- 侧边栏标题 -->
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <span class="sidebar-icon">🤖</span>
+                    <span>Mermaid Copilot</span>
+                </div>
+                <div class="sidebar-tabs">
+                    <button class="sidebar-tab active" data-tab="chat" onclick="switchSidebarTab('chat')">
+                        💬 聊天
+                    </button>
+                    <button class="sidebar-tab" data-tab="examples" onclick="switchSidebarTab('examples')">
+                        📝 模板
+                    </button>
+                </div>
+            </div>
+
+            <!-- 聊天界面 -->
+            <div id="chatTab" class="sidebar-content active">
+
+                <!-- 聊天历史 -->
+                <div class="chat-history" id="chatHistory">
+                    <div class="welcome-message">
+                        <div class="bot-avatar">🤖</div>
+                        <div class="message-content">
+                            <div class="message-text">
+                                你好！我是 Mermaid Copilot 👋<br><br>
+                                我可以帮你：<br>
+                                • 生成各种类型的 Mermaid 图表<br>
+                                • 修改和优化现有代码<br>
+                                • 解释图表语法<br>
+                                • 提供最佳实践建议<br><br>
+                                请告诉我你想要创建什么图表？
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- 输入区域 -->
+                <div class="chat-input-container">
+                    <div class="chat-input-area">
+                        <textarea id="chatInput"
+                                  placeholder="描述你想要的图表..."
+                                  onkeydown="handleChatKeyDown(event)"></textarea>
+                        <button id="chatSendBtn" onclick="sendChatMessage()" class="chat-send-btn">
+                            <span class="send-icon">➤</span>
+                        </button>
+                    </div>
+                    <div class="input-hint">
+                        按 Enter 发送，Shift+Enter 换行
+                    </div>
+                </div>
+            </div>
+
+            <!-- 示例模板界面 -->
+            <div id="examplesTab" class="sidebar-content">
+                <div class="examples">
+                    <!-- 流程图分类 -->
+                    <div class="template-category">
+                        <h3 class="category-title">🔄 流程图 Flowchart</h3>
+                        <div class="example-item" onclick="loadExample('flowchart')">
+                            <div class="example-title">基础流程图</div>
+                            <div class="example-desc">包含判断、处理、开始结束节点</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('flowchart_advanced')">
+                            <div class="example-title">分层流程图</div>
+                            <div class="example-desc">用户层、业务层、数据层架构</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('flowchart_simple')">
+                            <div class="example-title">简单流程图</div>
+                            <div class="example-desc">输入处理输出的基本流程</div>
+                        </div>
+                    </div>
+
+                    <!-- 序列图分类 -->
+                    <div class="template-category">
+                        <h3 class="category-title">⏱️ 序列图 Sequence</h3>
+                        <div class="example-item" onclick="loadExample('sequence')">
+                            <div class="example-title">用户登录序列</div>
+                            <div class="example-desc">完整的用户认证交互流程</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('sequence_api')">
+                            <div class="example-title">API调用序列</div>
+                            <div class="example-desc">微服务间的API调用链路</div>
+                        </div>
+                    </div>
+
+                    <!-- 类图分类 -->
+                    <div class="template-category">
+                        <h3 class="category-title">📦 类图 Class Diagram</h3>
+                        <div class="example-item" onclick="loadExample('class')">
+                            <div class="example-title">电商系统类图</div>
+                            <div class="example-desc">完整的电商领域模型设计</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('class_inheritance')">
+                            <div class="example-title">继承关系类图</div>
+                            <div class="example-desc">车辆管理系统的继承结构</div>
+                        </div>
+                    </div>
+
+                    <!-- 状态图分类 -->
+                    <div class="template-category">
+                        <h3 class="category-title">🔄 状态图 State Diagram</h3>
+                        <div class="example-item" onclick="loadExample('state')">
+                            <div class="example-title">订单状态流转</div>
+                            <div class="example-desc">电商订单的完整状态机</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('state_machine')">
+                            <div class="example-title">用户登录状态</div>
+                            <div class="example-desc">用户会话状态管理</div>
+                        </div>
+                    </div>
+
+                    <!-- ER图分类 -->
+                    <div class="template-category">
+                        <h3 class="category-title">🗃️ ER图 Entity Relationship</h3>
+                        <div class="example-item" onclick="loadExample('er')">
+                            <div class="example-title">电商平台数据库</div>
+                            <div class="example-desc">完整的电商系统数据库设计</div>
+                        </div>
+                    </div>
+
+                    <!-- 甘特图分类 -->
+                    <div class="template-category">
+                        <h3 class="category-title">📅 甘特图 Gantt Chart</h3>
+                        <div class="example-item" onclick="loadExample('gantt')">
+                            <div class="example-title">Web应用开发计划</div>
+                            <div class="example-desc">详细的项目开发时间线</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('gantt_sprint')">
+                            <div class="example-title">敏捷迭代计划</div>
+                            <div class="example-desc">Sprint冲刺开发计划</div>
+                        </div>
+                    </div>
+
+                    <!-- 饼图分类 -->
+                    <div class="template-category">
+                        <h3 class="category-title">🥧 饼图 Pie Chart</h3>
+                        <div class="example-item" onclick="loadExample('pie')">
+                            <div class="example-title">收入分布图</div>
+                            <div class="example-desc">年度收入来源分析</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('pie_survey')">
+                            <div class="example-title">满意度调查</div>
+                            <div class="example-desc">用户满意度统计结果</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('pie_technology')">
+                            <div class="example-title">技术栈占比</div>
+                            <div class="example-desc">开发技术使用情况</div>
+                        </div>
+                    </div>
+
+                    <!-- Git图分类 -->
+                    <div class="template-category">
+                        <h3 class="category-title">🌳 Git图 Git Graph</h3>
+                        <div class="example-item" onclick="loadExample('git')">
+                            <div class="example-title">功能开发流程</div>
+                            <div class="example-desc">特性分支开发和合并</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('git_workflow')">
+                            <div class="example-title">Git工作流</div>
+                            <div class="example-desc">完整的Git分支管理策略</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="toolbar">
+                
+                <div class="export-dropdown">
+                    <button class="btn btn-secondary" id="designButton">
+                        🎨 设计 ▼
+                    </button>
+                    <div class="dropdown-content" style="min-width: 200px;">
+                        <div style="padding: 8px 16px; font-weight: bold; color: #2d3748; border-bottom: 1px solid #e2e8f0; margin-bottom: 4px;">🎨 主题</div>
+                        <a href="#" onclick="changeTheme('default')">默认主题</a>
+                        <a href="#" onclick="changeTheme('dark')">深色主题</a>
+                        <a href="#" onclick="changeTheme('forest')">森林主题</a>
+                        <a href="#" onclick="changeTheme('neutral')">中性主题</a>
+                        <a href="#" onclick="changeTheme('base')">基础主题</a>
+                        <div style="padding: 8px 16px; font-weight: bold; color: #2d3748; border-bottom: 1px solid #e2e8f0; margin: 8px 0 4px 0;">🖼️ 背景</div>
+                        <a href="#" onclick="changeBackground('white')">白色背景</a>
+                        <a href="#" onclick="changeBackground('transparent')">透明背景</a>
+                        <a href="#" onclick="changeBackground('black')">黑色背景</a>
+                        <a href="#" onclick="changeBackground('gray')">灰色背景</a>
+                        <a href="#" onclick="changeBackground('blue')">蓝色背景</a>
+                        <a href="#" onclick="changeBackground('custom')">自定义背景...</a>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="showAIConfigDialog()" style="background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);">
+                    ⚙️ AI配置
+                </button>
+                
+                <div class="export-dropdown">
+                    <button class="btn btn-success">
+                        📥 导出 ▼
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="#" onclick="exportAsPNG()">导出为 PNG</a>
+                        <a href="#" onclick="exportAsSVG()">导出为 SVG</a>
+                        <a href="#" onclick="exportAsPDF()">导出为 PDF</a>
+                        <a href="#" onclick="exportAsHTML()">导出为 HTML</a>
+                        <a href="#" onclick="exportAsXML()">导出为 XML</a>
+                        <a href="#" onclick="exportAsMarkdown()">导出为 Markdown</a>
+                    </div>
+                </div>
+                
+                <div class="export-dropdown">
+                    <button class="btn btn-primary">
+                        📋 复制 ▼
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="#" onclick="copyAsSVG()">复制SVG到剪贴板</a>
+                        <a href="#" onclick="copyAsImage()">复制图片到剪贴板</a>
+                        <a href="#" onclick="copyForOffice()">复制为Office可编辑图形</a>
+                        <a href="#" onclick="copyMermaidCode()">复制Mermaid代码</a>
+                    </div>
+                </div>
+                
+                <button class="btn btn-secondary" onclick="clearEditor()">
+                    🗑️ 清空
+                </button>
+                
+                <div id="status" class="status status-success">✅ 就绪</div>
+                
+                <div class="loading" id="loading">⏳ 渲染中...</div>
+            </div>
+            
+            <div class="editor-container">
+                <div class="editor-panel">
+                    <div class="panel-header">📝 Mermaid 代码编辑器</div>
+                    <div class="ai-typing-indicator" id="aiTypingIndicator">
+                        🤖 AI正在编写代码...
+                    </div>
+                    <div id="editor"></div>
+                </div>
+                
+                <div class="resizer" id="resizer"></div>
+                
+                <div class="preview-panel">
+                    <div class="panel-header">
+                        <span>👁️ 图表预览</span>
+                        <div class="preview-controls">
+                            <button class="preview-btn" onclick="zoomOut()" title="缩小">🔍-</button>
+                            <button class="preview-btn" onclick="zoomIn()" title="放大">🔍+</button>
+                            <button class="preview-btn" onclick="toggleFullscreen()" title="全屏" id="fullscreenBtn">⛶</button>
+                        </div>
+                    </div>
+                    <div id="preview"></div>
+                </div>
+            </div>
+        </div>    </div>
+
+    <!-- AI配置对话框 -->
+    <div id="aiConfigDialog" class="ai-dialog">
+        <div class="ai-dialog-content" style="max-width: 500px;">
+            <div class="ai-dialog-header">
+                <div class="ai-dialog-title">
+                    <span>⚙️</span>
+                    AI配置
+                </div>
+                <button class="ai-close-btn" onclick="closeAIConfigDialog()">×</button>
+            </div>
+
+            <div class="ai-input-group">
+                <label class="ai-input-label">AI服务提供商</label>
+                <select id="toolbarAiProvider" class="ai-select" onchange="updateToolbarAPIKeyPlaceholder()">
+                    <option value="openai">OpenAI (GPT-4)</option>
+                    <option value="claude">Anthropic (Claude)</option>
+                    <option value="gemini">Google (Gemini)</option>
+                    <option value="qwen">阿里云 (通义千问)</option>
+                    <option value="openrouter">OpenRouter</option>
+                    <option value="custom">自定义API</option>
+                </select>
+            </div>
+
+            <div class="ai-input-group">
+                <label class="ai-input-label">API密钥</label>
+                <input type="password" id="toolbarApiKey" class="ai-input" placeholder="请输入API密钥">
+            </div>
+
+            <div class="ai-input-group">
+                <label class="ai-input-label">模型ID</label>
+                <input type="text" id="toolbarModelId" class="ai-input" placeholder="请输入模型ID">
+            </div>
+
+            <div class="ai-input-group" id="customEndpointGroup" style="display: none;">
+                <label class="ai-input-label">自定义API端点</label>
+                <input type="url" id="toolbarCustomEndpoint" class="ai-input" placeholder="自定义API端点">
+            </div>
+
+            <div class="ai-actions">
+                <button class="ai-btn ai-btn-secondary" onclick="closeAIConfigDialog()">取消</button>
+                <button class="ai-btn ai-btn-primary" onclick="saveAIConfigAndClose()">
+                    💾 保存配置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI生成对话框 -->
+    <div id="aiDialog" class="ai-dialog">
+        <div class="ai-dialog-content">
+            <div class="ai-dialog-header">
+                <div class="ai-dialog-title">
+                    <span>🤖</span>
+                    AI智能生成Mermaid图表
+                </div>
+                <button class="ai-close-btn" onclick="closeAIDialog()">×</button>
+            </div>
+
+            <div class="ai-input-group">
+                <label class="ai-input-label">📝 描述您想要的图表</label>
+                <textarea id="aiPrompt" class="ai-textarea" 
+                          placeholder="例如：创建一个用户登录流程图，包含用户输入、验证、成功和失败的处理流程"></textarea>
+                
+                <div class="ai-examples">
+                    <div class="ai-config-title">💡 示例提示词 (点击使用)</div>
+                    <div class="ai-example-item" onclick="setAIPrompt('创建一个电商购物流程图，包含浏览商品、加入购物车、结算、支付、订单确认等步骤')">
+                        📱 电商购物流程图
+                    </div>
+                    <div class="ai-example-item" onclick="setAIPrompt('设计一个软件开发生命周期的状态图，包含需求分析、设计、开发、测试、部署、维护等阶段')">
+                        🔄 软件开发生命周期
+                    </div>
+                    <div class="ai-example-item" onclick="setAIPrompt('创建一个公司组织架构图，包含CEO、各部门经理和员工的层级关系')">
+                        🏢 公司组织架构图
+                    </div>
+                    <div class="ai-example-item" onclick="setAIPrompt('设计一个微服务架构的时序图，展示用户请求从前端到各个微服务的调用过程')">
+                        🔗 微服务架构时序图
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-loading" id="aiLoading">
+                <div class="ai-loading-spinner"></div>
+                正在生成图表，请稍候...
+            </div>
+
+            <div class="ai-result" id="aiResult">
+                <div class="ai-result-title">✅ 生成成功！</div>
+                <div class="ai-result-code" id="aiResultCode"></div>
+            </div>
+
+            <div class="ai-actions">
+                <button class="ai-btn ai-btn-secondary" onclick="closeAIDialog()">取消</button>
+                <button class="ai-btn ai-btn-primary" onclick="generateWithAI()" id="generateBtn">
+                    🚀 生成图表
+                </button>
+                <button class="ai-btn ai-btn-primary" onclick="applyAIResult()" id="applyBtn" style="display: none;">
+                    ✅ 应用到编辑器
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
