@@ -365,12 +365,39 @@
             flex: none !important;
         }
 
-        .preview-fullscreen #preview {
-            background: #f8f9fa;
+        /* 当进入浏览器原生全屏时的样式 */
+        .preview-panel:fullscreen,
+        .preview-panel:-webkit-full-screen,
+        .preview-panel:-moz-full-screen,
+        .preview-panel:-ms-fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            background: white !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
         }
 
-        .preview-fullscreen .panel-header {
+        .preview-fullscreen #preview,
+        .preview-panel:fullscreen #preview,
+        .preview-panel:-webkit-full-screen #preview,
+        .preview-panel:-moz-full-screen #preview,
+        .preview-panel:-ms-fullscreen #preview {
+            background: #f8f9fa;
+            height: calc(100vh - 60px) !important;
+        }
+
+        .preview-fullscreen .panel-header,
+        .preview-panel:fullscreen .panel-header,
+        .preview-panel:-webkit-full-screen .panel-header,
+        .preview-panel:-moz-full-screen .panel-header,
+        .preview-panel:-ms-fullscreen .panel-header {
             background: #4299e1;
+            height: 60px;
+            display: flex;
+            align-items: center;
         }
 
         #editor {
@@ -1331,6 +1358,18 @@
                             <div class="example-title">简单流程图</div>
                             <div class="example-desc">输入处理输出的基本流程</div>
                         </div>
+                        <div class="example-item" onclick="loadExample('flowchart_shapes')">
+                            <div class="example-title">节点形状示例</div>
+                            <div class="example-desc">展示各种节点形状和样式</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('flowchart_connections')">
+                            <div class="example-title">连接线类型</div>
+                            <div class="example-desc">各种箭头和连接线样式</div>
+                        </div>
+                        <div class="example-item" onclick="loadExample('flowchart_subgraph')">
+                            <div class="example-title">子图分组</div>
+                            <div class="example-desc">使用子图组织复杂流程</div>
+                        </div>
                     </div>
 
                     <!-- 序列图分类 -->
@@ -1411,17 +1450,83 @@
                         </div>
                     </div>
 
-                    <!-- Git图分类 -->
+                    <!-- 时间线分类 -->
                     <div class="template-category">
-                        <h3 class="category-title">🌳 Git图 Git Graph</h3>
-                        <div class="example-item" onclick="loadExample('git')">
-                            <div class="example-title">功能开发流程</div>
-                            <div class="example-desc">特性分支开发和合并</div>
+                        <h3 class="category-title">⏰ 时间线 Timeline</h3>
+                        <div class="example-item" onclick="loadExample('timeline')">
+                            <div class="example-title">软件开发时间线</div>
+                            <div class="example-desc">项目开发各阶段进程</div>
                         </div>
-                        <div class="example-item" onclick="loadExample('git_workflow')">
-                            <div class="example-title">Git工作流</div>
-                            <div class="example-desc">完整的Git分支管理策略</div>
+                        <div class="example-item" onclick="loadExample('timeline_company')">
+                            <div class="example-title">公司发展历程</div>
+                            <div class="example-desc">企业成长里程碑</div>
                         </div>
+    
+                        <!-- Git图分类 -->
+                        <div class="template-category">
+                            <h3 class="category-title">🌳 Git图 Git Graph</h3>
+                            <div class="example-item" onclick="loadExample('git')">
+                                <div class="example-title">功能开发流程</div>
+                                <div class="example-desc">特性分支开发和合并</div>
+                            </div>
+                            <div class="example-item" onclick="loadExample('git_workflow')">
+                                <div class="example-title">Git工作流</div>
+                                <div class="example-desc">完整的Git分支管理策略</div>
+                            </div>
+                        </div>
+    
+                        <!-- 用户旅程图分类 -->
+                        <div class="template-category">
+                            <h3 class="category-title">🛤️ 用户旅程图 Journey</h3>
+                            <div class="example-item" onclick="loadExample('journey')">
+                                <div class="example-title">我的工作日</div>
+                                <div class="example-desc">日常工作流程体验</div>
+                            </div>
+                            <div class="example-item" onclick="loadExample('journey_customer')">
+                                <div class="example-title">客户购买体验</div>
+                                <div class="example-desc">完整的购买决策流程</div>
+                            </div>
+                        </div>
+    
+                        <!-- 思维导图分类 -->
+                        <div class="template-category">
+                            <h3 class="category-title">🧠 思维导图 Mindmap</h3>
+                            <div class="example-item" onclick="loadExample('mindmap')">
+                                <div class="example-title">项目规划脑图</div>
+                                <div class="example-desc">完整的项目规划思维导图</div>
+                            </div>
+                            <div class="example-item" onclick="loadExample('mindmap_learning')">
+                                <div class="example-title">学习计划脑图</div>
+                                <div class="example-desc">技能学习路径规划</div>
+                            </div>
+                        </div>
+    
+                        <!-- XY图分类 -->
+                        <div class="template-category">
+                            <h3 class="category-title">📈 XY图 XY Chart</h3>
+                            <div class="example-item" onclick="loadExample('xychart')">
+                                <div class="example-title">销售收入趋势</div>
+                                <div class="example-desc">年度销售数据可视化</div>
+                            </div>
+                            <div class="example-item" onclick="loadExample('xychart_performance')">
+                                <div class="example-title">网站性能指标</div>
+                                <div class="example-desc">每日性能监控数据</div>
+                            </div>
+                        </div>
+    
+                        <!-- 象限图分类 -->
+                        <div class="template-category">
+                            <h3 class="category-title">📊 象限图 Quadrant Chart</h3>
+                            <div class="example-item" onclick="loadExample('quadrant')">
+                                <div class="example-title">项目任务优先级</div>
+                                <div class="example-desc">任务价值与难度分析</div>
+                            </div>
+                            <div class="example-item" onclick="loadExample('quadrant_skills')">
+                                <div class="example-title">技能发展象限</div>
+                                <div class="example-desc">技能重要性与水平评估</div>
+                            </div>
+                        </div>
+    
                     </div>
                 </div>
             </div>
@@ -1533,6 +1638,7 @@
                     <option value="claude">Anthropic (Claude)</option>
                     <option value="gemini">Google (Gemini)</option>
                     <option value="qwen">阿里云 (通义千问)</option>
+                    <option value="doubao">字节跳动 (豆包)</option>
                     <option value="openrouter">OpenRouter</option>
                     <option value="custom">自定义API</option>
                 </select>

@@ -51,62 +51,163 @@ let isAITyping = false; // 标志AI是否正在编写代码
 const examples = {
     // 流程图示例 - 基础到高级
     flowchart: `flowchart TD
-    A[开始] --> B{判断条件}
+    A([开始]) --> B{判断条件}
     B -->|是| C[执行操作A]
     B -->|否| D[执行操作B]
-    C --> E[结束]
+    C --> E([结束])
     D --> E
     
     %% 样式定义
-    classDef startEnd fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef process fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef decision fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef startEnd fill:#e1f5fe,stroke:#01579b,stroke-width:3px,color:#000
+    classDef process fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef decision fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
     
     class A,E startEnd
     class C,D process
     class B decision`,
 
-    flowchart_advanced: `flowchart LR
-    subgraph 用户层
-        A[用户登录] --> B[身份验证]
-        B --> C{验证成功?}
+    flowchart_advanced: `flowchart TD
+    subgraph APP ["🌐 应用层"]
+        A([开始登录]) --> B[/输入用户名密码/]
+        B --> C{验证格式}
+        C -->|格式正确| D[发送验证请求]
+        C -->|格式错误| B
     end
     
-    subgraph 业务层
-        C -->|是| D[加载用户数据]
-        C -->|否| E[显示错误信息]
-        D --> F[权限检查]
-        F --> G{有权限?}
-        G -->|是| H[显示主界面]
-        G -->|否| I[显示权限不足]
+    subgraph AUTH ["🔐 认证服务"]
+        D --> E[检查用户存在]
+        E --> F{用户存在?}
+        F -->|是| G[验证密码]
+        F -->|否| H[用户不存在]
+        G --> I{密码正确?}
+        I -->|是| J[生成JWT Token]
+        I -->|否| K[密码错误]
     end
     
-    subgraph 数据层
-        D -.-> J[(用户数据库)]
-        F -.-> K[(权限数据库)]
+    subgraph DB ["💾 数据库"]
+        E -.-> L[(用户表)]
+        G -.-> L
+        J --> M[(Session表)]
     end
     
-    E --> L[返回登录页]
-    I --> L
-    H --> M[操作完成]
+    %% 返回结果
+    J --> N[登录成功]
+    H --> O[返回错误：用户不存在]
+    K --> P[返回错误：密码错误]
+    N --> Q([跳转主页])
+    O --> R([显示错误信息])
+    P --> R
     
-    %% 节点样式
-    classDef userLayer fill:#e3f2fd,stroke:#1976d2
-    classDef businessLayer fill:#f1f8e9,stroke:#388e3c
-    classDef dataLayer fill:#fce4ec,stroke:#c2185b
+    %% 样式定义
+    classDef appStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef authStyle fill:#f1f8e9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef dbStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef errorStyle fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+    classDef successStyle fill:#e8f5e8,stroke:#4caf50,stroke-width:2px,color:#000
     
-    class A,B,C,E,L userLayer
-    class D,F,G,H,I,M businessLayer
-    class J,K dataLayer`,
+    class A,B,C,D appStyle
+    class E,F,G,H,I,J,K authStyle
+    class L,M dbStyle
+    class O,P,R errorStyle
+    class N,Q successStyle`,
 
     flowchart_simple: `flowchart TD
     Start([开始]) --> Input[/输入数据/]
-    Input --> Process[处理数据]
+    Input --> Validate{数据有效?}
+    Validate -->|有效| Process[处理数据]
+    Validate -->|无效| Error[显示错误]
     Process --> Output[/输出结果/]
-    Output --> End([结束])
+    Error --> Input
+    Output --> Save[(保存结果)]
+    Save --> End([结束])
     
-    %% 添加注释和样式
-    Process --> Note["注意: 这里进行复杂计算可能需要较长时间"]`,
+    %% 添加样式
+    classDef startEnd fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff
+    classDef process fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:#fff
+    classDef decision fill:#FF9800,stroke:#E65100,stroke-width:2px,color:#fff
+    classDef io fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:#fff
+    classDef error fill:#F44336,stroke:#C62828,stroke-width:2px,color:#fff
+    classDef storage fill:#607D8B,stroke:#37474F,stroke-width:2px,color:#fff
+    
+    class Start,End startEnd
+    class Process process
+    class Validate decision
+    class Input,Output io
+    class Error error
+    class Save storage`,
+
+    flowchart_shapes: `flowchart TD
+    A[矩形节点] --> B(圆角矩形)
+    B --> C([体育场形状])
+    C --> D[[子程序]]
+    D --> E[(数据库)]
+    E --> F((圆形))
+    F --> G{菱形判断}
+    G -->|是| H[/输入输出/]
+    G -->|否| I[显示]
+    H --> J{{六角形}}
+    I --> J
+    
+    %% 节点样式
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px
+    classDef highlight fill:#ffeb3b,stroke:#f57f17,stroke-width:3px
+    classDef process fill:#4caf50,stroke:#2e7d32,stroke-width:2px
+    classDef decision fill:#ff9800,stroke:#e65100,stroke-width:2px
+    
+    class A,D,I default
+    class B,C highlight
+    class E,F,H,J process
+    class G decision`,
+
+    flowchart_connections: `flowchart LR
+    A --> B
+    A --- C
+    A -.- D
+    A -.-> E
+    A ==> F
+    A --o G
+    A --x H
+    
+    B -->|带标签| I
+    C ---|实线| J
+    D -.-|虚线| K
+    E -.->|虚线箭头| L
+    F ==>|粗箭头| M
+    G --o|圆点| N
+    H --x|叉号| O
+    
+    %% 链式连接
+    P --> Q --> R --> S
+    
+    %% 多分支
+    T --> U
+    T --> V
+    T --> W
+    
+    %% 样式
+    classDef default fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000`,
+
+    flowchart_subgraph: `flowchart TB
+    subgraph TOP [顶层系统]
+        direction TB
+        subgraph B1 [子系统1]
+            direction RL
+            i1 -->f1
+        end
+        subgraph B2 [子系统2]
+            direction BT
+            i2 -->f2
+        end
+    end
+    
+    A --> TOP --> B
+    B1 --> B2
+    
+    %% 外部连接
+    C --> B2
+    B1 --> D
+    
+    classDef subgraphStyle fill:#f9f9f9,stroke:#333,stroke-width:4px`,
 
     // 序列图示例 - 多种场景
     sequence: `sequenceDiagram
@@ -116,19 +217,19 @@ const examples = {
     participant D as 🗄️数据库
     participant C as 📄缓存
     
-    U->>+W: 登录请求
-    W->>+S: 验证凭据
-    S->>+D: 查询用户信息
-    D-->>-S: 返回用户数据
+    U->>W: 登录请求
+    W->>S: 验证凭据
+    S->>D: 查询用户信息
+    D-->>S: 返回用户数据
     
     alt 用户存在且密码正确
-        S->>+C: 创建会话
-        C-->>-S: 会话ID
+        S->>C: 创建会话
+        C-->>S: 会话ID
         S-->>W: 登录成功 + Token
-        W-->>-U: 跳转到主页
+        W-->>U: 跳转到主页
     else 用户不存在或密码错误
         S-->>W: 登录失败
-        W-->>-U: 显示错误信息
+        W-->>U: 显示错误信息
     end
     
     Note over U,D: 整个认证流程
@@ -142,27 +243,27 @@ const examples = {
     participant Payment as 支付服务
     participant DB as 数据库
     
-    Client->>+Gateway: POST /api/orders
-    Gateway->>+Auth: 验证Token
-    Auth-->>-Gateway: Token有效
+    Client->>Gateway: POST /api/orders
+    Gateway->>Auth: 验证Token
+    Auth-->>Gateway: Token有效
     
-    Gateway->>+Order: 创建订单
-    Order->>+DB: 检查库存
-    DB-->>-Order: 库存充足
+    Gateway->>Order: 创建订单
+    Order->>DB: 检查库存
+    DB-->>Order: 库存充足
     
-    Order->>+Payment: 发起支付
+    Order->>Payment: 发起支付
     Payment->>Payment: 处理支付
     
     alt 支付成功
         Payment-->>Order: 支付完成
         Order->>DB: 更新订单状态
         Order-->>Gateway: 订单创建成功
-        Gateway-->>-Client: 200 OK
+        Gateway-->>Client: 200 OK
     else 支付失败
         Payment-->>Order: 支付失败
         Order->>DB: 回滚订单
         Order-->>Gateway: 订单创建失败
-        Gateway-->>-Client: 400 Error
+        Gateway-->>Client: 400 Error
     end`,
 
     // 类图示例 - 详细的OOP设计
@@ -173,7 +274,6 @@ const examples = {
         -string username
         -string email
         -string password
-        -Date createdAt
         +register()
         +login()
         +updateProfile()
@@ -184,24 +284,24 @@ const examples = {
         -int productId
         -string name
         -string description
-        -decimal price
+        -float price
         -int stock
         -string category
-        +updatePrice(decimal newPrice)
-        +updateStock(int quantity)
+        +updatePrice(newPrice)
+        +updateStock(quantity)
         +getDetails()
     }
     
     class Order {
         -int orderId
         -int userId
-        -Date orderDate
-        -decimal totalAmount
-        -OrderStatus status
-        +addItem(Product product, int quantity)
-        +removeItem(int productId)
+        -string orderDate
+        -float totalAmount
+        -string status
+        +addItem(productId, quantity)
+        +removeItem(productId)
         +calculateTotal()
-        +updateStatus(OrderStatus status)
+        +updateStatus(status)
     }
     
     class OrderItem {
@@ -209,16 +309,16 @@ const examples = {
         -int orderId
         -int productId
         -int quantity
-        -decimal unitPrice
+        -float unitPrice
         +getSubtotal()
     }
     
     class Payment {
         -int paymentId
         -int orderId
-        -decimal amount
-        -PaymentMethod method
-        -PaymentStatus status
+        -float amount
+        -string method
+        -string status
         +processPayment()
         +refund()
     }
@@ -226,38 +326,18 @@ const examples = {
     class Cart {
         -int cartId
         -int userId
-        +addProduct(Product product, int quantity)
-        +removeProduct(int productId)
+        +addProduct(productId, quantity)
+        +removeProduct(productId)
         +clear()
         +checkout()
     }
     
-    %% 枚举
-    class OrderStatus {
-        <<enumeration>>
-        PENDING
-        CONFIRMED
-        SHIPPED
-        DELIVERED
-        CANCELLED
-    }
+    User --> Order
+    User --> Cart
+    Order --> OrderItem
+    Product --> OrderItem
+    Order --> Payment
     
-    class PaymentStatus {
-        <<enumeration>>
-        PENDING
-        COMPLETED
-        FAILED
-        REFUNDED
-    }
-    
-    %% 关系定义
-    User ||--o{ Order : "下单"
-    User ||--|| Cart : "拥有"
-    Order ||--o{ OrderItem : "包含"
-    Product ||--o{ OrderItem : "关联"
-    Order ||--|| Payment : "支付"
-    
-    %% 继承关系
     User <|-- AdminUser
     User <|-- CustomerUser
     
@@ -460,25 +540,23 @@ const examples = {
     %% 电商平台数据库设计
     USER {
         int user_id PK
-        string username UK
-        string email UK
+        string username
+        string email
         string password_hash
         string first_name
         string last_name
         string phone
-        datetime created_at
-        datetime updated_at
-        boolean is_active
-        enum role "customer, admin, seller"
+        string created_at
+        string updated_at
+        string role
     }
     
     CATEGORY {
         int category_id PK
-        string name UK
+        string name
         string description
         int parent_id FK
         string image_url
-        boolean is_active
         int sort_order
     }
     
@@ -486,29 +564,28 @@ const examples = {
         int product_id PK
         string name
         string description
-        decimal price
-        decimal discount_price
+        float price
+        float discount_price
         int stock_quantity
-        string sku UK
+        string sku
         int category_id FK
         int seller_id FK
-        datetime created_at
-        datetime updated_at
-        boolean is_active
+        string created_at
+        string updated_at
         float rating
         int review_count
     }
     
-    ORDER {
+    ORDERS {
         int order_id PK
         int user_id FK
-        decimal total_amount
-        decimal discount_amount
-        decimal final_amount
-        enum status "pending, confirmed, shipped, delivered, cancelled"
-        datetime order_date
-        datetime shipped_date
-        datetime delivered_date
+        float total_amount
+        float discount_amount
+        float final_amount
+        string status
+        string order_date
+        string shipped_date
+        string delivered_date
         string shipping_address
         string billing_address
     }
@@ -518,8 +595,8 @@ const examples = {
         int order_id FK
         int product_id FK
         int quantity
-        decimal unit_price
-        decimal total_price
+        float unit_price
+        float total_price
     }
     
     CART {
@@ -527,8 +604,8 @@ const examples = {
         int user_id FK
         int product_id FK
         int quantity
-        datetime added_at
-        datetime updated_at
+        string added_at
+        string updated_at
     }
     
     REVIEW {
@@ -537,49 +614,29 @@ const examples = {
         int product_id FK
         int rating
         string title
-        text comment
-        datetime created_at
-        boolean is_verified_purchase
+        string comment
+        string created_at
     }
     
     PAYMENT {
         int payment_id PK
         int order_id FK
-        decimal amount
-        enum method "credit_card, paypal, bank_transfer"
-        enum status "pending, completed, failed, refunded"
+        float amount
+        string method
+        string status
         string transaction_id
-        datetime payment_date
+        string payment_date
     }
     
-    SHIPPING {
-        int shipping_id PK
-        int order_id FK
-        string carrier
-        string tracking_number
-        decimal shipping_cost
-        datetime shipped_date
-        datetime estimated_delivery
-        datetime actual_delivery
-        enum status "preparing, shipped, in_transit, delivered"
-    }
-    
-    %% 关系定义
-    USER ||--o{ ORDER : "places"
-    USER ||--o{ CART : "has"
-    USER ||--o{ REVIEW : "writes"
-    USER ||--o{ PRODUCT : "sells"
-    
-    CATEGORY ||--o{ PRODUCT : "contains"
-    CATEGORY ||--o{ CATEGORY : "has_subcategory"
-    
-    PRODUCT ||--o{ ORDER_ITEM : "ordered_in"
-    PRODUCT ||--o{ CART : "added_to"
-    PRODUCT ||--o{ REVIEW : "reviewed_in"
-    
-    ORDER ||--o{ ORDER_ITEM : "contains"
-    ORDER ||--|| PAYMENT : "paid_by"
-    ORDER ||--|| SHIPPING : "shipped_via"`,
+    USER ||--o{ ORDERS : places
+    USER ||--o{ CART : has
+    USER ||--o{ REVIEW : writes
+    CATEGORY ||--o{ PRODUCT : contains
+    PRODUCT ||--o{ ORDER_ITEM : contains
+    PRODUCT ||--o{ CART : contains
+    PRODUCT ||--o{ REVIEW : has
+    ORDERS ||--o{ ORDER_ITEM : contains
+    ORDERS ||--|| PAYMENT : paid_by`,
 
     // 甘特图示例 - 详细项目计划
     gantt: `gantt
@@ -633,7 +690,7 @@ const examples = {
     
     section Sprint 1 - 用户认证
     Sprint规划         :milestone, s1_start, 2024-02-01, 0d
-    用户注册功能       :s1_task1, s1_start, 3d
+    用户注册功能       :s1_task1, 2024-02-01, 3d
     用户登录功能       :s1_task2, after s1_task1, 3d
     密码重置功能       :s1_task3, after s1_task2, 2d
     测试用户认证       :s1_test, after s1_task3, 2d
@@ -641,7 +698,7 @@ const examples = {
     
     section Sprint 2 - 核心功能
     Sprint规划         :milestone, s2_start, after s1_end, 0d
-    商品浏览功能       :s2_task1, s2_start, 4d
+    商品浏览功能       :s2_task1, after s1_end, 4d
     商品搜索功能       :s2_task2, after s2_task1, 3d
     购物车功能         :s2_task3, after s2_task2, 3d
     测试核心功能       :s2_test, after s2_task3, 2d
@@ -649,7 +706,7 @@ const examples = {
     
     section Sprint 3 - 订单支付
     Sprint规划         :milestone, s3_start, after s2_end, 0d
-    订单创建功能       :s3_task1, s3_start, 3d
+    订单创建功能       :s3_task1, after s2_end, 3d
     支付集成功能       :s3_task2, after s3_task1, 4d
     订单管理功能       :s3_task3, after s3_task2, 3d
     测试订单支付       :s3_test, after s3_task3, 2d
@@ -657,8 +714,8 @@ const examples = {
     
     section Sprint 4 - 优化发布
     Sprint规划         :milestone, s4_start, after s3_end, 0d
-    性能优化          :s4_task1, s4_start, 3d
-    UI优化            :s4_task2, s4_start, 4d
+    性能优化          :s4_task1, after s3_end, 3d
+    UI优化            :s4_task2, after s3_end, 4d
     安全加固          :s4_task3, after s4_task1, 2d
     发布准备          :s4_task4, after s4_task2, 2d
     正式发布          :milestone, release, after s4_task4, 0d`,
@@ -685,118 +742,254 @@ const examples = {
     "DevOps" : 12
     "测试" : 8`,
 
-    // Git图示例 - 复杂分支管理
-    git: `gitgraph
-    commit id: "初始化项目"
-    commit id: "添加基础框架"
+    // 时间线示例 - 软件开发历程
+    timeline: `timeline
+    title 🚀 软件开发项目时间线
     
-    branch develop
-    checkout develop
-    commit id: "添加用户模块"
-    commit id: "添加数据库配置"
+    2024-01 : 项目启动
+            : 需求分析
+            : 技术选型
     
-    branch feature/auth
-    checkout feature/auth
-    commit id: "实现登录功能"
-    commit id: "实现注册功能"
-    commit id: "添加JWT认证"
+    2024-02 : 系统设计
+            : 架构设计
+            : 数据库设计
+            : UI/UX设计
     
-    checkout develop
-    merge feature/auth
-    commit id: "集成认证功能"
+    2024-03 : 开发阶段
+            : 前端开发
+            : 后端API开发
+            : 数据库实现
     
-    branch feature/product
-    checkout feature/product
-    commit id: "商品模型设计"
-    commit id: "商品CRUD接口"
-    commit id: "商品搜索功能"
+    2024-04 : 测试阶段
+            : 单元测试
+            : 集成测试
+            : 用户验收测试
     
-    checkout develop
-    branch feature/order
-    checkout feature/order
-    commit id: "订单模型设计"
-    commit id: "订单创建流程"
-    
-    checkout develop
-    merge feature/product
-    commit id: "集成商品功能"
-    
-    merge feature/order
-    commit id: "集成订单功能"
-    
-    checkout main
-    merge develop
-    commit id: "v1.0.0 发布"
-    
-    checkout develop
-    branch hotfix/security
-    checkout hotfix/security
-    commit id: "修复安全漏洞"
-    
-    checkout main
-    merge hotfix/security
-    commit id: "v1.0.1 安全修复"
-    
-    checkout develop
-    merge hotfix/security`,
+    2024-05 : 部署上线
+            : 生产环境部署
+            : 性能监控
+            : 用户培训`,
 
-    git_workflow: `gitgraph
-    commit id: "项目初始化"
+    timeline_company: `timeline
+    title 🏢 公司发展历程
     
-    branch develop
-    checkout develop
-    commit id: "开发环境配置"
+    2020 : 公司成立
+         : 获得天使投资
+         : 团队组建
     
-    %% 功能开发分支
-    branch feature/user-management
-    checkout feature/user-management
-    commit id: "用户注册"
-    commit id: "用户登录"
-    commit id: "用户权限"
+    2021 : 产品研发
+         : MVP版本发布
+         : 首批用户获取
+         : A轮融资
     
-    checkout develop
-    merge feature/user-management
-    commit id: "合并用户管理"
+    2022 : 业务扩张
+         : 产品功能完善
+         : 用户量突破10万
+         : 市场拓展
     
-    %% 并行开发
-    branch feature/api-gateway
-    checkout feature/api-gateway
-    commit id: "网关配置"
-    commit id: "路由规则"
+    2023 : 技术升级
+         : 架构重构
+         : 性能优化
+         : B轮融资
     
-    checkout develop
-    branch feature/payment
-    checkout feature/payment
-    commit id: "支付接口"
-    commit id: "支付回调"
-    
-    checkout develop
-    merge feature/api-gateway
-    merge feature/payment
-    commit id: "集成网关和支付"
-    
-    %% 发布分支
-    branch release/v2.0
-    checkout release/v2.0
-    commit id: "准备发布v2.0"
-    commit id: "修复发布问题"
-    
-    checkout main
-    merge release/v2.0
-    commit id: "v2.0.0 正式发布"
-    
-    %% 紧急修复
-    branch hotfix/critical-bug
-    checkout hotfix/critical-bug
-    commit id: "修复严重Bug"
-    
-    checkout main
-    merge hotfix/critical-bug
-    commit id: "v2.0.1 紧急修复"
-    
-    checkout develop
-    merge hotfix/critical-bug
-    commit id: "同步修复到开发分支"`
+    2024 : 国际化
+         : 海外市场进入
+         : 多语言支持
+         : 用户量突破100万`,
+
+    // Git图示例 - 分支管理
+    git: `---
+title: 功能开发流程
+---
+gitGraph
+   commit
+   commit
+   branch develop
+   checkout develop
+   commit
+   commit
+   branch feature
+   checkout feature
+   commit
+   commit
+   checkout develop
+   merge feature
+   commit
+   checkout main
+   merge develop
+   commit`,
+
+    git_workflow: `---
+title: Git工作流程
+---
+gitGraph
+   commit
+   commit
+   branch develop
+   checkout develop
+   commit
+   commit
+   branch feature
+   checkout feature
+   commit
+   commit
+   checkout develop
+   merge feature
+   commit
+   branch release
+   checkout release
+   commit
+   checkout main
+   merge release
+   commit
+   branch hotfix
+   checkout hotfix
+   commit
+   checkout main
+   merge hotfix
+   commit
+   checkout develop
+   merge hotfix
+   commit`,
+
+    // 象限图示例 - 优先级矩阵
+    quadrant: `quadrantChart
+    title 项目任务优先级矩阵
+    x-axis Low Difficulty --> High Difficulty
+    y-axis Low Value --> High Value
+    quadrant-1 High Value Low Difficulty
+    quadrant-2 High Value High Difficulty
+    quadrant-3 Low Value Low Difficulty
+    quadrant-4 Low Value High Difficulty
+    User Login: [0.8, 0.9]
+    Data Backup: [0.6, 0.95]
+    UI Polish: [0.3, 0.4]
+    Advanced Reports: [0.7, 0.6]
+    Bug Fixes: [0.2, 0.8]
+    Performance: [0.8, 0.7]
+    Documentation: [0.1, 0.3]
+    New Features: [0.9, 0.5]`,
+
+    quadrant_skills: `quadrantChart
+    title 技能发展象限图
+    x-axis Low Current Level --> High Current Level
+    y-axis Low Importance --> High Importance
+    quadrant-1 High Importance Low Level
+    quadrant-2 High Importance High Level
+    quadrant-3 Low Importance Low Level
+    quadrant-4 Low Importance High Level
+    JavaScript: [0.8, 0.9]
+    React: [0.6, 0.8]
+    Node.js: [0.4, 0.7]
+    Database Design: [0.3, 0.9]
+    UI Design: [0.2, 0.5]
+    Project Management: [0.5, 0.8]
+    Algorithm: [0.7, 0.6]
+    DevOps: [0.3, 0.7]`,
+
+    // 用户旅程图示例 - 工作日流程
+    journey: `journey
+    title 我的工作日
+    section 上班路上
+      起床洗漱: 5: Me
+      吃早餐: 4: Me
+      通勤: 2: Me
+      到达办公室: 4: Me
+    section 工作时间
+      查看邮件: 3: Me
+      开晨会: 2: Me, Team
+      编写代码: 5: Me
+      午餐时间: 5: Me
+      下午开发: 4: Me
+    section 下班回家
+      整理工作: 3: Me
+      下班通勤: 2: Me
+      到家休息: 5: Me`,
+
+    journey_customer: `journey
+    title 客户购买体验旅程
+    section 发现产品
+      浏览网站: 3: Customer
+      查看产品: 4: Customer
+      阅读评价: 3: Customer
+    section 购买决策
+      比较价格: 2: Customer
+      咨询客服: 4: Customer, Support
+      加入购物车: 5: Customer
+    section 完成购买
+      填写信息: 2: Customer
+      选择支付: 3: Customer
+      确认订单: 5: Customer
+    section 售后体验
+      收到商品: 5: Customer
+      使用产品: 4: Customer
+      评价反馈: 3: Customer`,
+
+    // 思维导图示例 - 项目规划
+    mindmap: `mindmap
+  root((项目规划))
+    需求分析
+      用户调研
+      竞品分析
+      功能清单
+    技术架构
+      前端技术
+        React
+        Vue.js
+      后端技术
+        Node.js
+        Python
+      数据库
+        MySQL
+        MongoDB
+    项目管理
+      时间计划
+      人员分配
+      风险控制
+    测试部署
+      单元测试
+      集成测试
+      生产部署`,
+
+    mindmap_learning: `mindmap
+  root((学习计划))
+    编程语言
+      JavaScript
+        ES6语法
+        异步编程
+        框架学习
+      Python
+        基础语法
+        数据分析
+        机器学习
+    开发工具
+      Git版本控制
+      IDE使用
+      调试技巧
+    项目实践
+      个人项目
+      开源贡献
+      团队协作
+    职业发展
+      技术博客
+      社区参与
+      认证考试`,
+
+    // XY图示例 - 销售数据
+    xychart: `xychart-beta
+    title "销售收入趋势"
+    x-axis [Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec]
+    y-axis "Revenue (万元)" 40 --> 110
+    bar [50, 60, 75, 82, 95, 105, 110, 102, 92, 85, 70, 60]
+    line [50, 60, 75, 82, 95, 105, 110, 102, 92, 85, 70, 60]`,
+
+    xychart_performance: `xychart-beta
+    title "网站性能指标"
+    x-axis [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+    y-axis "Response Time (ms)" 100 --> 500
+    line [150, 180, 200, 250, 300, 220, 160]
+    bar [120, 140, 170, 200, 280, 190, 130]`
+
 };
 
 // 初始化编辑器
@@ -1079,13 +1272,39 @@ async function exportAsPNG() {
     try {
         // 获取当前背景颜色设置
         const currentBg = preview.style.backgroundColor || '#ffffff';
-        const backgroundColor = currentBg === 'transparent' ? null : currentBg;
+        const backgroundColor = currentBg === 'transparent' ? '#ffffff' : currentBg;
         
-        const canvas = await html2canvas(preview, {
+        // 创建临时容器来确保捕获完整的SVG
+        const tempContainer = document.createElement('div');
+        tempContainer.style.cssText = `
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            background: ${backgroundColor};
+            padding: 20px;
+            display: inline-block;
+        `;
+        
+        // 克隆SVG并添加到临时容器
+        const svgClone = svg.cloneNode(true);
+        tempContainer.appendChild(svgClone);
+        document.body.appendChild(tempContainer);
+        
+        const canvas = await html2canvas(tempContainer, {
             backgroundColor: backgroundColor,
-            scale: 2,
-            useCORS: true
+            scale: 3,
+            useCORS: true,
+            allowTaint: false,
+            foreignObjectRendering: false,
+            logging: false,
+            width: tempContainer.scrollWidth,
+            height: tempContainer.scrollHeight,
+            scrollX: 0,
+            scrollY: 0
         });
+        
+        // 清理临时容器
+        document.body.removeChild(tempContainer);
         
         const link = document.createElement('a');
         link.download = 'mermaid-diagram.png';
@@ -1132,13 +1351,39 @@ async function exportAsPDF() {
     try {
         // 获取当前背景颜色设置
         const currentBg = preview.style.backgroundColor || '#ffffff';
-        const backgroundColor = currentBg === 'transparent' ? null : currentBg;
+        const backgroundColor = currentBg === 'transparent' ? '#ffffff' : currentBg;
         
-        const canvas = await html2canvas(preview, {
+        // 创建临时容器来确保捕获完整的SVG
+        const tempContainer = document.createElement('div');
+        tempContainer.style.cssText = `
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            background: ${backgroundColor};
+            padding: 20px;
+            display: inline-block;
+        `;
+        
+        // 克隆SVG并添加到临时容器
+        const svgClone = svg.cloneNode(true);
+        tempContainer.appendChild(svgClone);
+        document.body.appendChild(tempContainer);
+        
+        const canvas = await html2canvas(tempContainer, {
             backgroundColor: backgroundColor,
-            scale: 2,
-            useCORS: true
+            scale: 3,
+            useCORS: true,
+            allowTaint: false,
+            foreignObjectRendering: false,
+            logging: false,
+            width: tempContainer.scrollWidth,
+            height: tempContainer.scrollHeight,
+            scrollX: 0,
+            scrollY: 0
         });
+        
+        // 清理临时容器
+        document.body.removeChild(tempContainer);
         
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF();
@@ -1328,6 +1573,7 @@ function updateToolbarAPIKeyPlaceholder() {
         'claude': '请输入Anthropic API Key',
         'gemini': '请输入Google Gemini API Key',
         'qwen': '请输入阿里云API Key',
+        'doubao': '请输入豆包API Key',
         'openrouter': '请输入OpenRouter API Key (sk-or-...)',
         'custom': '请输入自定义API Key'
     };
@@ -1337,6 +1583,7 @@ function updateToolbarAPIKeyPlaceholder() {
         'claude': '请输入模型ID (如: claude-3-opus-20240229, claude-3-sonnet-20240229)',
         'gemini': '请输入模型ID (如: gemini-pro, gemini-pro-vision)',
         'qwen': '请输入模型ID (如: qwen-turbo, qwen-plus, qwen-max)',
+        'doubao': '请输入模型ID (如: doubao-lite-4k, doubao-pro-4k)',
         'openrouter': '请输入模型ID (如: openai/gpt-4, anthropic/claude-3-opus)',
         'custom': '请输入模型ID (如: gpt-4, claude-3-sonnet)'
     };
@@ -1433,6 +1680,7 @@ Mermaid代码:`;    const endpoints = {
         'claude': 'https://api.anthropic.com/v1/messages',
         'gemini': 'https://generativelanguage.googleapis.com/v1beta/models',
         'qwen': 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
+        'doubao': 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
         'openrouter': 'https://openrouter.ai/api/v1/chat/completions'
     };
     
@@ -1578,6 +1826,27 @@ Mermaid代码:`;    const endpoints = {
                 })
             };
             break;
+            
+        case 'doubao':
+            requestOptions = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: modelId,
+                    messages: [
+                        {
+                            role: 'user',
+                            content: mermaidPrompt
+                        }
+                    ],
+                    max_tokens: 2000,
+                    temperature: 0.7
+                })
+            };
+            break;
     }
     
     const finalEndpoint = provider === 'gemini' ? `${endpoint}?key=${apiKey}` : endpoint;
@@ -1585,7 +1854,18 @@ Mermaid代码:`;    const endpoints = {
     console.log('Making API request to:', finalEndpoint);
     console.log('Request options:', { ...requestOptions, body: 'REDACTED' });
     
-    const response = await fetch(finalEndpoint, requestOptions);
+    let response;
+    try {
+        response = await fetch(finalEndpoint, requestOptions);
+    } catch (fetchError) {
+        console.error('Network Error:', fetchError);
+        if (fetchError.message.includes('ERR_NAME_NOT_RESOLVED')) {
+            throw new Error(`无法连接到 AI 服务：域名解析失败。请检查网络连接或更换 API 端点。`);
+        } else if (fetchError.message.includes('Failed to fetch')) {
+            throw new Error(`网络连接失败，请检查网络连接或 API 端点配置。`);
+        }
+        throw new Error(`网络请求失败: ${fetchError.message}`);
+    }
     
     if (!response.ok) {
         const errorText = await response.text();
@@ -1601,6 +1881,7 @@ Mermaid代码:`;    const endpoints = {
     switch (provider) {
         case 'openai':
         case 'openrouter':
+        case 'doubao':
         case 'custom':
             generatedText = data.choices?.[0]?.message?.content || '';
             if (!generatedText && data.error) {
@@ -1692,7 +1973,7 @@ function showToast(message, type = 'info') {
         color: 'white',
         fontWeight: '500',
         fontSize: '14px',
-        zIndex: '10000',
+        zIndex: '1000000',
         maxWidth: '400px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         transform: 'translateX(100%)',
@@ -1808,13 +2089,39 @@ async function copyAsImage() {
     try {
         // 获取当前背景颜色设置
         const currentBg = preview.style.backgroundColor || '#ffffff';
-        const backgroundColor = currentBg === 'transparent' ? null : currentBg;
+        const backgroundColor = currentBg === 'transparent' ? '#ffffff' : currentBg;
         
-        const canvas = await html2canvas(preview, {
+        // 创建临时容器来确保捕获完整的SVG
+        const tempContainer = document.createElement('div');
+        tempContainer.style.cssText = `
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            background: ${backgroundColor};
+            padding: 20px;
+            display: inline-block;
+        `;
+        
+        // 克隆SVG并添加到临时容器
+        const svgClone = svg.cloneNode(true);
+        tempContainer.appendChild(svgClone);
+        document.body.appendChild(tempContainer);
+        
+        const canvas = await html2canvas(tempContainer, {
             backgroundColor: backgroundColor,
-            scale: 2,
-            useCORS: true
+            scale: 3,
+            useCORS: true,
+            allowTaint: false,
+            foreignObjectRendering: false,
+            logging: false,
+            width: tempContainer.scrollWidth,
+            height: tempContainer.scrollHeight,
+            scrollX: 0,
+            scrollY: 0
         });
+        
+        // 清理临时容器
+        document.body.removeChild(tempContainer);
         
         canvas.toBlob(async (blob) => {
             try {
@@ -2194,7 +2501,7 @@ function extractMermaidCode(content) {
     
     // 如果没有找到代码块，检查是否是纯Mermaid代码
     // 检查是否以Mermaid关键词开头
-    const mermaidKeywords = ['flowchart', 'graph', 'sequenceDiagram', 'classDiagram', 'erDiagram', 'journey', 'pie', 'gantt', 'gitgraph', 'mindmap', 'timeline'];
+    const mermaidKeywords = ['flowchart', 'graph', 'sequenceDiagram', 'classDiagram', 'erDiagram', 'journey', 'pie', 'gantt', 'gitgraph', 'mindmap', 'timeline', 'quadrantChart', 'xychart-beta'];
     const trimmedContent = content.trim();
     
     for (const keyword of mermaidKeywords) {
@@ -2406,7 +2713,7 @@ let isFullscreen = false;
 
 // 放大功能
 function zoomIn() {
-    currentZoom += 0.2;
+    currentZoom += 0.3;
     if (currentZoom > 3) currentZoom = 3; // 最大放大3倍
     applyZoom();
     showToast(`放大到 ${Math.round(currentZoom * 100)}%`, 'info');
@@ -2414,7 +2721,7 @@ function zoomIn() {
 
 // 缩小功能
 function zoomOut() {
-    currentZoom -= 0.2;
+    currentZoom -= 0.3;
     if (currentZoom < 0.5) currentZoom = 0.5; // 最小缩小到50%
     applyZoom();
     showToast(`缩小到 ${Math.round(currentZoom * 100)}%`, 'info');
@@ -2434,21 +2741,51 @@ function applyZoom() {
 }
 
 // 全屏切换
-function toggleFullscreen() {
+async function toggleFullscreen() {
     const previewPanel = document.querySelector('.preview-panel');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     
     if (!isFullscreen) {
-        // 进入全屏
-        previewPanel.classList.add('preview-fullscreen');
-        fullscreenBtn.textContent = '⛶';
-        fullscreenBtn.title = '退出全屏';
-        isFullscreen = true;
-        showToast('已进入全屏模式，按ESC或点击按钮退出', 'info');
-        
-        // 监听ESC键退出全屏，确保不重复添加
-        document.removeEventListener('keydown', handleEscapeKey);
-        document.addEventListener('keydown', handleEscapeKey);
+        try {
+            // 进入真正的全屏模式（隐藏任务栏）
+            if (previewPanel.requestFullscreen) {
+                await previewPanel.requestFullscreen();
+            } else if (previewPanel.webkitRequestFullscreen) {
+                await previewPanel.webkitRequestFullscreen();
+            } else if (previewPanel.msRequestFullscreen) {
+                await previewPanel.msRequestFullscreen();
+            } else if (previewPanel.mozRequestFullScreen) {
+                await previewPanel.mozRequestFullScreen();
+            }
+            
+            // 添加全屏样式
+            previewPanel.classList.add('preview-fullscreen');
+            fullscreenBtn.textContent = '⛶';
+            fullscreenBtn.title = '退出全屏';
+            isFullscreen = true;
+            showToast('已进入全屏模式，按ESC或点击按钮退出', 'info');
+            
+            // 监听全屏状态变化
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('msfullscreenchange', handleFullscreenChange);
+            document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+            
+            // 监听ESC键退出全屏，确保不重复添加
+            document.removeEventListener('keydown', handleEscapeKey);
+            document.addEventListener('keydown', handleEscapeKey);
+        } catch (error) {
+            console.warn('无法进入真正的全屏模式，使用CSS全屏:', error);
+            // 如果无法进入真正的全屏，则使用CSS全屏
+            previewPanel.classList.add('preview-fullscreen');
+            fullscreenBtn.textContent = '⛶';
+            fullscreenBtn.title = '退出全屏';
+            isFullscreen = true;
+            showToast('已进入全屏模式，按ESC或点击按钮退出', 'info');
+            
+            document.removeEventListener('keydown', handleEscapeKey);
+            document.addEventListener('keydown', handleEscapeKey);
+        }
     } else {
         // 退出全屏
         exitFullscreen();
@@ -2456,18 +2793,65 @@ function toggleFullscreen() {
 }
 
 // 退出全屏
-function exitFullscreen() {
+async function exitFullscreen() {
     const previewPanel = document.querySelector('.preview-panel');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     
+    try {
+        // 退出真正的全屏模式
+        if (document.exitFullscreen) {
+            await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            await document.msExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            await document.mozCancelFullScreen();
+        }
+    } catch (error) {
+        console.warn('退出全屏时出错:', error);
+    }
+    
+    // 移除全屏样式和状态
     previewPanel.classList.remove('preview-fullscreen');
     fullscreenBtn.textContent = '⛶';
     fullscreenBtn.title = '全屏';
     isFullscreen = false;
     showToast('已退出全屏模式', 'info');
     
-    // 移除ESC键监听
+    // 移除事件监听器
     document.removeEventListener('keydown', handleEscapeKey);
+    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+}
+
+// 处理全屏状态变化
+function handleFullscreenChange() {
+    const isCurrentlyFullscreen = document.fullscreenElement ||
+                                 document.webkitFullscreenElement ||
+                                 document.msFullscreenElement ||
+                                 document.mozFullScreenElement;
+    
+    if (!isCurrentlyFullscreen && isFullscreen) {
+        // 用户通过ESC键或其他方式退出了全屏，更新状态
+        const previewPanel = document.querySelector('.preview-panel');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        
+        previewPanel.classList.remove('preview-fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.title = '全屏';
+        isFullscreen = false;
+        showToast('已退出全屏模式', 'info');
+        
+        // 移除事件监听器
+        document.removeEventListener('keydown', handleEscapeKey);
+        document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+        document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+    }
 }
 
 // 处理ESC键
